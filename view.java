@@ -132,10 +132,14 @@ public class view extends JFrame {
 		return newImage;
 	}
 	
+	File file;
+	BufferedImage image;
+	
 	/**
 	 * Create the frame.
 	 */
 	public view() {
+		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 702, 535);
 		contentPane = new JPanel();
@@ -146,8 +150,11 @@ public class view extends JFrame {
 		
 		textField = new JTextField();
 		
-		JButton btnNewButton = new JButton("Open file to duplicate");
-		contentPane.add(btnNewButton);
+		JButton btnOpenFile = new JButton("Open file");
+		contentPane.add(btnOpenFile);
+		
+		JButton btnDuplicateFile = new JButton("Duplicate image");
+		contentPane.add(btnDuplicateFile);
 		
 		JButton btnHorizontal = new JButton("Horizontal flip image");
 		contentPane.add(btnHorizontal);
@@ -161,11 +168,14 @@ public class view extends JFrame {
 		JLabel labelImagem = new JLabel("");
 		contentPane.add(labelImagem);
 		
-		JButton saveButton = new JButton("Duplicate file");
+		JLabel labelNovaImagem = new JLabel("");
+		contentPane.add(labelNovaImagem);
+		
+		JButton saveButton = new JButton("Save image to new file");
 		JLabel lblNewLabel = new JLabel("New file name");
 		JLabel labelError = new JLabel();
 		
-		btnNewButton.addActionListener(new ActionListener() {
+		btnOpenFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser filechooser = new JFileChooser();
 				filechooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -176,26 +186,41 @@ public class view extends JFrame {
 				int retorno = filechooser.showOpenDialog(contentPane);
 				
 				if (retorno == JFileChooser.APPROVE_OPTION) {
-					File file = filechooser.getSelectedFile();
-					labelImagem.setIcon(new ImageIcon(file.getPath()));
-					contentPane.add(lblNewLabel);
-					contentPane.add(textField);
-					contentPane.add(saveButton);
-					textField.setColumns(10);
+					file = filechooser.getSelectedFile();
+					image = fileToBufferedImage(file);
+					labelImagem.setIcon(new ImageIcon(image));
+				}
+
+				contentPane.add(lblNewLabel);
+				contentPane.add(textField);
+				contentPane.add(saveButton);
+				textField.setColumns(10);
+			}
+		});
+		
+		btnDuplicateFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				image = fileToBufferedImage(file);
+				labelNovaImagem.setIcon(new ImageIcon(image));
+			}
+		});
+		
+		saveButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				contentPane.add(labelError);
+				try {
+					String fileName = "untitled";
+					boolean textFieldHasText = !textField.getText().isEmpty();
 					
-					saveButton.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							contentPane.add(labelError);
-							File newfile = new File(file.getParentFile().getAbsolutePath() + "\\" + textField.getText() + ".jpg");
-							try {
-								copyFiles(file, newfile);
-								labelError.setText("Image saved at " + file.getParentFile().getAbsolutePath() + "\\" + textField.getText() + ".jpg");
-							} catch (IOException e1) {
-								// TODO Auto-generated catch block
-								labelError.setText("erro ao salvar imagem");
-							}
-						}
-					});
+					if (textFieldHasText) {
+						fileName= textField.getText();
+					}
+					
+					saveFile(image, fileName);
+					labelError.setText("Image saved at " + System.getProperty("user.dir") + "\\" + fileName + ".jpg");
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					labelError.setText("erro ao salvar imagem");
 				}
 			}
 		});
@@ -203,91 +228,22 @@ public class view extends JFrame {
 		btnHorizontal.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				labelError.setText("");
-				contentPane.remove(lblNewLabel);
-				contentPane.remove(textField);
-				contentPane.remove(saveButton);
-				JFileChooser filechooser = new JFileChooser();
-				filechooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				BufferedImage image;
-				
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("Image", "jpg","jpeg");
-				
-				filechooser.setFileFilter(filter);
-				int retorno = filechooser.showOpenDialog(contentPane);
-				
-				if (retorno == JFileChooser.APPROVE_OPTION) {
-					File file = filechooser.getSelectedFile();
-					image = fileToBufferedImage(file);
-					image = getHorizontallyFlippedImage(image);
-					
-					try {
-						saveFile(image, "horizontal_flip_output");
-						contentPane.add(labelError);
-						labelError.setText("Image saved at " + System.getProperty("user.dir") + "\\" + "horizontal_flip_output" + ".jpg");
-					} catch(IOException eh) {
-						labelError.setText("Erro ao salvar horizontal flip");
-					}
-					
-					labelImagem.setIcon(new ImageIcon(image));
-				}
+				image = getHorizontallyFlippedImage(image);
+				labelNovaImagem.setIcon(new ImageIcon(image));
 			}
 		});
 		
 		btnVertical.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser filechooser = new JFileChooser();
-				BufferedImage image;
-				filechooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("Image", "jpg","jpeg");
-				
-				filechooser.setFileFilter(filter);
-				int retorno = filechooser.showOpenDialog(contentPane);
-				
-				if (retorno == JFileChooser.APPROVE_OPTION) {
-					File file = filechooser.getSelectedFile();
-					image = fileToBufferedImage(file);
-					image = getVerticallyFlippedImage(image);
-					
-					try {
-						saveFile(image, "vertical_flip_output");
-						contentPane.add(labelError);
-						labelError.setText("Image saved at " + System.getProperty("user.dir") + "\\" + "vertical_flip_output" + ".jpg");
-					}catch(IOException ev) {
-						labelError.setText("Erro ao salvar vertical flip");
-					}
-					labelImagem.setIcon(new ImageIcon(image));
-					
-				}
+				image = getVerticallyFlippedImage(image);
+				labelNovaImagem.setIcon(new ImageIcon(image));
 			}
 		});
 		
 		btnGrayscale.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser filechooser = new JFileChooser();
-				BufferedImage image;
-				filechooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("Image", "jpg","jpeg");
-				
-				filechooser.setFileFilter(filter);
-				int retorno = filechooser.showOpenDialog(contentPane);
-				
-				if (retorno == JFileChooser.APPROVE_OPTION) {
-					File file = filechooser.getSelectedFile();
-					image = fileToBufferedImage(file);
-					image = getGrayscaleImage(image);
-					
-					try {
-						saveFile(image, "grayscale");
-						contentPane.add(labelError);
-						labelError.setText("Image saved at " + System.getProperty("user.dir") + "\\" + "grayscale" + ".jpg");
-					}catch(IOException ev) {
-						labelError.setText("Erro ao salvar grayscale");
-					}
-					
-					labelImagem.setIcon(new ImageIcon(image));
-				}
+				image = getGrayscaleImage(image);
+				labelNovaImagem.setIcon(new ImageIcon(image));
 			}
 		});
 	}
